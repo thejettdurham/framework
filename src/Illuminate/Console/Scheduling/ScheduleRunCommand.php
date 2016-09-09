@@ -20,6 +20,10 @@ class ScheduleRunCommand extends Command
      */
     protected $description = 'Run the scheduled commands';
 
+    protected $signature = 'schedule:run
+                            {--dry : Reports what commands would run, but doesn\'t actually run them}';
+
+    protected $options;
     /**
      * The schedule instance.
      *
@@ -48,9 +52,12 @@ class ScheduleRunCommand extends Command
     public function fire()
     {
         $events = $this->schedule->dueEvents($this->laravel);
-
+        $options = $this->option();
         $eventsRan = 0;
 
+        if ($options['dry']) {
+            $this->line('<comment>DRY RUN:</comment> Scheduled commands will not run');
+        }
         foreach ($events as $event) {
             if (! $event->filtersPass($this->laravel)) {
                 continue;
@@ -58,7 +65,9 @@ class ScheduleRunCommand extends Command
 
             $this->line('<info>Running scheduled command:</info> '.$event->getSummaryForDisplay());
 
-            $event->run($this->laravel);
+            if (!$options['dry']) {
+                $event->run($this->laravel);
+            }
 
             ++$eventsRan;
         }
